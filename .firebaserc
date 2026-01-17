@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "itslawrey-flutter-demos"
+  },
+  "targets": {
+    "itslawrey-flutter-demos": {
+      "hosting": {
+        "sudoku": [
+          "itslawrey-sudoku"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
