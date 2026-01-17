@@ -19,6 +19,17 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   hive_generator: ^2.0.1
   build_runner: ^2.4.13
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/favicon.png"
+  web:
+    generate: true
+    image_path: "assets/favicon.png"
+    background_color: "#1E1E2C"
+    theme_color: "#B196F6"
