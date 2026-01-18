@@ -281,6 +281,7 @@ class GameState {
       if (selectedNumber != null) {
         updateErrors(selectedNumber);
       }
+      isGameOver();
     }
   }
 
