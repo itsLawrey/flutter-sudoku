@@ -18,7 +18,8 @@ class MultiCellAdapter extends TypeAdapter<MultiCell> {
     };
     return MultiCell()
       ..numbers = (fields[0] as List).cast<int>()
-      ..isMarked = fields[1] as bool;
+      ..isMarked =
+          (fields[1] as bool?) ?? false; // Default to false for legacy saves
   }
 
   @override
