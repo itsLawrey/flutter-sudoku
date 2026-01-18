@@ -72,7 +72,7 @@ class GameState {
     await Future.delayed(Duration.zero);
 
     fillTable(0, 0);
-    await prepareGameTestWin(difficulty);
+    await prepareGame(difficulty);
     setFixedTable();
     gameOver = false;
   }
