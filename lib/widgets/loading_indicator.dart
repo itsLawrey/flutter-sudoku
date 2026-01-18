@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sudoku/utils/view_utils.dart';
 
 class LoadingIndicator extends StatelessWidget {
   const LoadingIndicator({super.key});
@@ -10,9 +11,7 @@ class LoadingIndicator extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(
-              const Color.fromARGB(255, 177, 150, 246),
-            ),
+            valueColor: AlwaysStoppedAnimation<Color>(ViewUtils.accentColor),
             strokeWidth: 4,
           ),
           const SizedBox(height: 24),

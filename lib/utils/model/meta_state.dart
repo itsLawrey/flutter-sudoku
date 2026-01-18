@@ -46,9 +46,9 @@ class MetaState {
         );
       }
       gameHistory.add(gameState!);
-      calculateHighscores();
-      _saveToHive();
     }
+    calculateHighscores();
+    _saveToHive();
   }
 
   void loadGame(GameState game) {

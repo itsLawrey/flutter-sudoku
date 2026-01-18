@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sudoku/utils/view_utils.dart';
 
 class NewGameButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -12,7 +13,7 @@ class NewGameButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromARGB(255, 177, 150, 246),
+          backgroundColor: ViewUtils.accentColor,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

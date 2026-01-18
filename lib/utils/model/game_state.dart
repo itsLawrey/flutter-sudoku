@@ -17,7 +17,11 @@ class GameState {
 
   @HiveField(1)
   List<String> get fixedTableList => _fixedTable.toList();
-  set fixedTableList(List<String> list) => _fixedTable = list.toSet();
+
+  @HiveField(1)
+  set fixedTableList(List<String> value) {
+    _fixedTable = value.toSet();
+  }
 
   @HiveField(2)
   int? selectedNumber;
@@ -68,7 +72,7 @@ class GameState {
     await Future.delayed(Duration.zero);
 
     fillTable(0, 0);
-    await prepareGame(difficulty);
+    await prepareGameTestWin(difficulty);
     setFixedTable();
     gameOver = false;
   }
@@ -148,6 +152,14 @@ class GameState {
     if (filledCellCount() == 81) {
       if (currentErrors == 0 && allCellsHaveSingleNumber()) {
         gameOver = true;
+
+        // Unmark all cells on game over
+        for (int i = 0; i < 9; i++) {
+          for (int j = 0; j < 9; j++) {
+            gameTable[i][j].isMarked = false;
+          }
+        }
+
         print("Game Over!");
       }
     }
@@ -438,6 +450,14 @@ class GameState {
         }
       }
       if (count > 1) clusterErrors[k] = 1;
+    }
+  }
+
+  void toggleMark(int x, int y) {
+    if (!gameOver) {
+      if (!isFixed(x, y)) {
+        gameTable[x][y].handleMarking();
+      }
     }
   }
 

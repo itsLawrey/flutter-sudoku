@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'model/multicell.dart';
 
 class ViewUtils {
+  static final Color accentColor = const Color.fromARGB(255, 163, 131, 252);
+  //Color.fromARGB(255, 130, 80, 255);
+
   static Color getCellBackgroundColor(
     bool isGameOver,
     bool isErrorCell,
@@ -14,9 +17,19 @@ class ViewUtils {
       return const Color.fromARGB(50, 244, 67, 54); // Red tint
     }
     if (isGameOver) {
-      return const Color.fromARGB(255, 18, 144, 1).withOpacity(0.2);
+      return const Color.fromARGB(100, 18, 144, 1); // Green tint
     }
     return const Color(0xFF2B2B3D); // Default dark
+  }
+
+  static Color getNumberPadTextColor(bool isCompleted, bool isGameOver) {
+    if (isGameOver) {
+      return Colors.green;
+    }
+    if (isCompleted) {
+      return Colors.blue;
+    }
+    return Colors.white;
   }
 
   static Widget buildCellContent(
@@ -39,13 +52,13 @@ class ViewUtils {
         style: TextStyle(
           fontSize: 24,
           fontWeight: isFixed ? FontWeight.bold : FontWeight.normal,
-          color: isConflicting
-              ? Colors.red
-              : (isNumberComplete && number == selectedNumber
-                    ? Colors.blue
-                    : (isFixed
-                          ? Colors.white
-                          : const Color.fromARGB(255, 177, 150, 246))),
+          color: (isNumberComplete && number == selectedNumber)
+              ? Colors.blue
+              : (cell.isMarked
+                    ? Colors.amber
+                    : (isConflicting
+                          ? Colors.red
+                          : (isFixed ? Colors.white : accentColor))),
         ),
       );
     } else {

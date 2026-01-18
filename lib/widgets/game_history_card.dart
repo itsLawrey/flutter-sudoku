@@ -61,6 +61,18 @@ class _GameHistoryCardState extends State<GameHistoryCard> {
       isEditing = true;
     });
     _focusNode.requestFocus();
+
+    // Wait for the keyboard to likely appear or the widget to rebuild
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.5, // Center the item in the viewport if possible
+        );
+      }
+    });
   }
 
   void _stopEditing() {

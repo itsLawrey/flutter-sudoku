@@ -30,7 +30,8 @@ class GameStateAdapter extends TypeAdapter<GameState> {
       ..gameOver = fields[7] as bool
       ..startDate = fields[9] as DateTime
       ..elapsedSeconds = fields[10] as int
-      ..gameName = fields[11] as String;
+      ..gameName = fields[11] as String
+      ..fixedTableList = (fields[1] as List).cast<String>();
   }
 
   @override

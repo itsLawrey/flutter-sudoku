@@ -16,15 +16,19 @@ class MultiCellAdapter extends TypeAdapter<MultiCell> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return MultiCell()..numbers = (fields[0] as List).cast<int>();
+    return MultiCell()
+      ..numbers = (fields[0] as List).cast<int>()
+      ..isMarked = fields[1] as bool;
   }
 
   @override
   void write(BinaryWriter writer, MultiCell obj) {
     writer
-      ..writeByte(1)
+      ..writeByte(2)
       ..writeByte(0)
-      ..write(obj.numbers);
+      ..write(obj.numbers)
+      ..writeByte(1)
+      ..write(obj.isMarked);
   }
 
   @override

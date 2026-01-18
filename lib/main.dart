@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:sudoku/utils/model/difficulty.dart';
@@ -14,6 +15,8 @@ import 'package:sudoku/widgets/loading_indicator.dart';
 import 'package:sudoku/widgets/number_pad.dart';
 import 'package:sudoku/widgets/sudoku_grid.dart';
 import 'package:sudoku/widgets/new_game_button.dart';
+import 'package:sudoku/utils/view_utils.dart';
+import 'package:sudoku/utils/loader_utils.dart';
 
 void main() async {
   await Hive.initFlutter();
@@ -39,6 +42,9 @@ class _MainAppState extends State<MainApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      removeWebLoadingIndicator();
+    });
     _initPersistence();
   }
 
@@ -156,7 +162,7 @@ class _MainAppState extends State<MainApp> {
         colorScheme: ColorScheme.fromSwatch(
           primarySwatch: Colors.purple,
           brightness: Brightness.dark,
-        ).copyWith(secondary: const Color.fromARGB(255, 186, 123, 211)),
+        ).copyWith(secondary: ViewUtils.accentColor),
       ),
       home: Builder(
         builder: (context) => Scaffold(
@@ -185,9 +191,7 @@ class _MainAppState extends State<MainApp> {
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 177, 150, 246),
-            ),
+            decoration: BoxDecoration(color: ViewUtils.accentColor),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
@@ -216,6 +220,24 @@ class _MainAppState extends State<MainApp> {
               _showDifficultyDialog(context);
             },
           ),
+          Divider(color: Colors.white24),
+          ExpansionTile(
+            leading: const Icon(Icons.info_outline, color: Colors.white),
+            title: const Text(
+              'Color Legend',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+            iconColor: Colors.white,
+            collapsedIconColor: Colors.white,
+            shape: const Border(),
+            children: [
+              _buildLegendItem(Colors.white, 'Fixed'),
+              _buildLegendItem(Colors.red, 'Conflict'),
+              _buildLegendItem(Colors.blue, 'Completed'),
+              _buildLegendItem(Colors.green, 'Victory'),
+              _buildLegendItem(Colors.amber, 'Marked'),
+            ],
+          ),
           if (metaState.inGame()) ...[
             Divider(color: Colors.white24),
             ListTile(
@@ -233,6 +255,38 @@ class _MainAppState extends State<MainApp> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String label, {bool isOutline = false}) {
+    return ListTile(
+      leading: Container(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          color: isOutline ? Colors.transparent : color,
+          shape: BoxShape.circle,
+          border: isOutline ? Border.all(color: color, width: 2) : null,
+        ),
+        child: isOutline
+            ? Center(
+                child: Text(
+                  '1',
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              )
+            : null,
+      ),
+      title: Text(
+        label,
+        style: const TextStyle(color: Colors.white70, fontSize: 14),
+      ),
+      dense: false,
+      contentPadding: const EdgeInsets.only(left: 32.0, right: 16.0),
     );
   }
 
@@ -271,60 +325,87 @@ class _MainAppState extends State<MainApp> {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600),
-        child: Column(
-          children: [
-            Expanded(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: SudokuGrid(
-                      game: metaState.gameState!,
-                      onCellTap: _handleCellTap,
+        child: CallbackShortcuts(
+          bindings: {
+            // Standard number keys 1-9
+            ...{
+              for (var i = 0; i <= 9; i++)
+                SingleActivator(LogicalKeyboardKey(0x30 + i)): () =>
+                    _selectNumber(i),
+            },
+            // Numpad keys 0-9
+            ...{
+              for (var i = 0; i <= 9; i++)
+                SingleActivator(
+                  [
+                    LogicalKeyboardKey.numpad0,
+                    LogicalKeyboardKey.numpad1,
+                    LogicalKeyboardKey.numpad2,
+                    LogicalKeyboardKey.numpad3,
+                    LogicalKeyboardKey.numpad4,
+                    LogicalKeyboardKey.numpad5,
+                    LogicalKeyboardKey.numpad6,
+                    LogicalKeyboardKey.numpad7,
+                    LogicalKeyboardKey.numpad8,
+                    LogicalKeyboardKey.numpad9,
+                  ][i],
+                ): () =>
+                    _selectNumber(i),
+            },
+            const SingleActivator(LogicalKeyboardKey.escape): _deselectNumber,
+            const SingleActivator(LogicalKeyboardKey.backspace):
+                _deselectNumber,
+          },
+          child: Focus(
+            autofocus: true,
+            child: Column(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: SudokuGrid(
+                          game: metaState.gameState!,
+                          onCellTap: _handleCellTap,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
 
-            if (metaState.gameState!.gameOver)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(
-                      onPressed: () => _exitGame(context),
-                      child: const Text(
-                        'Menu',
-                        style: TextStyle(color: Colors.white70),
-                      ),
+                if (metaState.gameState!.gameOver)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          onPressed: () => _exitGame(context),
+                          child: const Text(
+                            'Menu',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        NewGameButton(
+                          onPressed: () {
+                            _exitGame(context);
+                            _showDifficultyDialog(context);
+                          },
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    NewGameButton(
-                      onPressed: () {
-                        _exitGame(context);
-                        _showDifficultyDialog(context);
-                      },
-                    ),
-                  ],
+                  ),
+                NumberPad(
+                  game: metaState.gameState!,
+                  onNumberSelect: _selectNumber,
                 ),
-              ),
-            NumberPad(
-              game: metaState.gameState!,
-              onNumberSelect: (number) {
-                setState(() {
-                  if (metaState.gameState!.selectedNumber == number) {
-                    metaState.gameState!.deselectNumber();
-                  } else {
-                    metaState.gameState!.selectNumber(number);
-                  }
-                });
-              },
+                const SizedBox(height: 20),
+              ],
             ),
-            const SizedBox(height: 20),
-          ],
+          ),
         ),
       ),
     );
@@ -335,7 +416,16 @@ class _MainAppState extends State<MainApp> {
 
     if (metaState.gameState!.selectedNumber != null) {
       if (!metaState.gameState!.isFixed(row, col)) {
+        // Track if game was already over before this move
+        bool wasGameOver = metaState.gameState!.gameOver;
+
         setState(() {
+          // Marking mode
+          if (metaState.gameState!.selectedNumber == 0) {
+            metaState.gameState!.toggleMark(row, col);
+            return;
+          }
+
           // if same number is already placed, remove it
           if (metaState.gameState!.gameTable[row][col].numbers.contains(
             metaState.gameState!.selectedNumber!,
@@ -355,8 +445,8 @@ class _MainAppState extends State<MainApp> {
           }
         });
 
-        // Check game over immediately after move
-        if (metaState.gameState!.gameOver) {
+        // Check game over immediately after move - only show dialog if game just ended
+        if (!wasGameOver && metaState.gameState!.gameOver) {
           _stopTimer();
           metaState.saveGame();
 
@@ -415,6 +505,24 @@ class _MainAppState extends State<MainApp> {
   void _exitGame(BuildContext context) {
     setState(() {
       metaState.closeGame();
+    });
+  }
+
+  void _selectNumber(int number) {
+    if (!metaState.inGame()) return;
+    setState(() {
+      if (metaState.gameState!.selectedNumber == number) {
+        metaState.gameState!.deselectNumber();
+      } else {
+        metaState.gameState!.selectNumber(number);
+      }
+    });
+  }
+
+  void _deselectNumber() {
+    if (!metaState.inGame()) return;
+    setState(() {
+      metaState.gameState!.deselectNumber();
     });
   }
 }

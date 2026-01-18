@@ -4,6 +4,7 @@ import 'package:sudoku/utils/model/meta_state.dart';
 import 'package:sudoku/widgets/game_history_card.dart';
 import 'package:sudoku/widgets/dialogs/delete_confirmation_dialog.dart';
 import 'package:sudoku/widgets/new_game_button.dart';
+import 'package:sudoku/utils/view_utils.dart';
 
 class LandingPage extends StatelessWidget {
   final MetaState metaState;
@@ -31,98 +32,112 @@ class LandingPage extends StatelessWidget {
   }
 
   Widget _buildArchiveView(BuildContext context, List<GameState> history) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 600),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Highscores Placeholder
-              const Text(
-                'Highscores',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Highscores Placeholder
+                const Text(
+                  'Highscores',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              _buildHighscoresDict(metaState),
-              const SizedBox(height: 32),
+                const SizedBox(height: 16),
+                _buildHighscoresDict(metaState),
+                const SizedBox(height: 32),
 
-              // Recent Games
-              Center(child: NewGameButton(onPressed: onNewGame)),
-              const SizedBox(height: 32),
-              const Text(
-                'Recent Games',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                // Recent Games
+                Center(child: NewGameButton(onPressed: onNewGame)),
+                const SizedBox(height: 32),
+                const Text(
+                  'Recent Games',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: history.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.grid_3x3,
-                              size: 80,
-                              color: Colors.white24,
+                const SizedBox(height: 16),
+                if (history.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 32.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 16),
+                          const Text(
+                            'No recent games',
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'No recent games',
-                              style: TextStyle(
-                                color: Colors.white54,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Start a new game to see it here!',
+                            style: TextStyle(
+                              color: Colors.white38,
+                              fontSize: 14,
                             ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Start a new game to see it here!',
-                              style: TextStyle(
-                                color: Colors.white38,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: history.length,
-                        itemBuilder: (context, index) {
-                          final game = history[index];
-                          return GameHistoryCard(
-                            index: history.length - index,
-                            date: _formatDate(game.startDate),
-                            difficulty: game.difficulty.name.toUpperCase(),
-                            isCompleted: game.gameOver,
-                            time: GameState.formatTime(game.elapsedSeconds),
-                            gameName: game.gameName,
-                            onRename: (newName) => onGameRename(game, newName),
-                            onActionTap: () => onGameSelected(game),
-                            onDelete: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (context) =>
-                                    const DeleteConfirmationDialog(),
-                              );
-                              if (confirm == true) {
-                                onGameDelete(game);
-                              }
-                            },
-                          );
-                        },
+                          ),
+                        ],
                       ),
-              ),
-            ],
+                    ),
+                  )
+                else
+                  ...history.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final game = entry.value;
+                    return GameHistoryCard(
+                      index: history.length - index,
+                      date: _formatDate(game.startDate),
+                      difficulty: game.difficulty.name.toUpperCase(),
+                      isCompleted: game.gameOver,
+                      time: GameState.formatTime(game.elapsedSeconds),
+                      gameName: game.gameName,
+                      onRename: (newName) => onGameRename(game, newName),
+                      onActionTap: () => onGameSelected(game),
+                      onDelete: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) =>
+                              const DeleteConfirmationDialog(),
+                        );
+                        if (confirm == true) {
+                          onGameDelete(game);
+                        }
+                      },
+                    );
+                  }).toList(),
+                // Add some bottom padding for better scrolling experience. sudoku grid icon for design
+                const SizedBox(height: 100),
+                Center(
+                  child: Icon(
+                    Icons.grid_3x3,
+                    size: 160,
+                    color: ViewUtils.accentColor,
+                    shadows: const [
+                      Shadow(
+                        color: Color.fromARGB(255, 186, 159, 254),
+                        offset: Offset(0, 2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 100),
+              ],
+            ),
           ),
         ),
       ),
