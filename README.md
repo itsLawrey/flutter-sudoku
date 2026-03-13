@@ -1,111 +1,60 @@
 # Sudoku
 
-A feature-rich Sudoku game built with Flutter as a personal portfolio project. Developed mainly for Android, Web, and Desktop.
+> A feature-rich, cross-platform Sudoku game that dynamically generates unique, solvable puzzles with real-time error checking and persistent saves.
 
----
+[![Demo/Live App](https://img.shields.io/badge/Live_Demo-Link-blue)](https://itslawrey-sudoku.web.app/) 
 
-## Features
+## Visuals
 
-### Core Gameplay
-- **Three difficulty levels** — Easy, Medium, and Hard, each generating a unique, solvable puzzle every time via a randomised backtracking algorithm.
-- **Unique puzzle guarantee** — The puzzle generator uses a constraint-based solver to verify there is exactly **one valid solution** before presenting the board.
-- **Symmetric board generation** — Clues are removed using rotational symmetry for a visually balanced starting grid.
-- **Keyboard support** — Press keys 1–9 (or numpad) to select numbers; `Escape` / `Backspace` to deselect.
 
-### Multi-Number Cells (Candidate Mode)
-- Each cell can hold **more than one number at a time** — useful for pencilling in candidates.
-- Tapping a selected number on a cell that already contains it **removes** it (toggle behaviour).
-- The game only registers a win once every cell contains exactly one correct number.
-
-### Favourite / Mark Mode
-- Select the **star (☆) button** on the number pad to enter mark mode.
-- Tap any single-number cell to **highlight it as a favourite** — useful for tracking key cells during solving.
-
-### Error Highlighting
-- Selecting a number from the pad **instantly highlights all conflicting rows, columns, and 3×3 boxes** in red.
-- Conflicts update in real time as you place or remove numbers.
-- A colour legend is available in the side drawer:
-  - **White** — Fixed (given) clue
-  - **Red** — Conflict
-  - **Blue** — Fully and correctly placed number
-  - **Green** — Victory state
-  - **Amber** — Marked / favourited cell
-
-### Save & Load
-- Games are **automatically saved** as you play (every second via the live timer).
-- The home screen shows a **full history of all your games**, sorted by most recent.
-- Resume any in-progress game or revisit a completed one with a single tap.
-
-### Rename Saves
-- Every saved game shows an editable title — tap the name (with the pencil icon) to **rename it inline**.
-- Renames persist immediately to local storage.
-
-### Delete Saves
-- Swipe or tap the **Delete** button on any game card to remove it, with a confirmation dialog to prevent accidents.
-
-### Best Times / Highscores
-- The app tracks your **personal best time** for each difficulty (Easy / Medium / Hard).
-- Best times are shown on the home screen highscore board.
-- Your current best is displayed **live in the app bar** while you're playing, so you always know if you're on pace for a record.
-
-### Victory Screen
-- Completing a puzzle triggers a **victory dialog** showing your time and difficulty.
-- Options to start a new game, return to the menu, or **spectate the finished board**.
-
----
 
 ## Tech Stack
 
-| Technology | Purpose |
-|---|---|
-| [Flutter](https://flutter.dev) | Cross-platform UI framework |
-| [Hive](https://pub.dev/packages/hive) | Lightweight local persistence (no server needed) |
-| [Confetti](https://pub.dev/packages/confetti) | Victory celebration animation |
+* **Frontend:** Flutter / Dart 3.9.2
+* **Backend/BaaS:** None (Offline-first architecture)
+* **Local Storage:** Hive (NoSQL database for fast, synchronous reads/writes)
+* **State Management:** Flutter Native State (`setState`) with a centralized `MetaState` architecture
+* **Key Libraries:** `hive` & `hive_flutter` for local persistence
 
----
+## Core Features
 
-## Getting Started
+* **Algorithmic Puzzle Generation:** Dynamically generates Easy, Medium, and Hard puzzles using a randomized backtracking solver, mathematically guaranteeing that every board has exactly one unique solution.
+* **Multi-Number Candidate Mode (Notes):** Allows players to pencil in multiple potential numbers per cell (notes) and effortlessly toggle them, streamlining the advanced solving process.
+* **Favourite / Marking System:** Includes a quick-access star (☆) button to highlight specific cells in amber.
+* **Real-time Conflict Highlighting:** Instantly validates user input against Sudoku rules, highlighting any row, column, or 3x3 grid conflicts in red to provide immediate feedback.
+* **Intelligent Auto-Saving & History:** Automatically saves the game state every second, maintaining a reverse-chronological history of all past and active games that can be renamed, resumed, or deleted at any time.
+* **Keyboard Navigation Support:** Fully supports physical keyboard inputs (standard 1-9, numpad, escape, backspace) using Flutter's `CallbackShortcuts`, providing a seamless and highly responsive experience on Desktop and Web platforms.
+* **Highscore Tracking:** Persistently tracks and updates the personal best clear times across all three difficulty levels, displaying them prominently on the landing page and during active gameplay.
 
-### Prerequisites
-- Flutter SDK `^3.9.2`
-- Dart SDK (included with Flutter)
+## Technical Architecture & Challenges
 
-### Run Locally
+### State Management & Performance
+To keep the application lightweight, I opted for simple state management using Flutter's native `setState`, orchestrated through a master `MetaState` object injected at the top of the widget tree. The `MetaState` holds the active `GameState` and handles side-effects like saving and timer updates. By breaking the UI into independent components like the `NumberPad` and `SudokuGrid`, I minimized unnecessary widget rebuilds. Only the mutated cells or specific UI elements are refreshed during rapid user input, preventing frame drops during gameplay.
 
-```bash
-git clone https://github.com/your-username/sudoku.git
-cd sudoku
-flutter pub get
-flutter run
-```
+### Algorithmic Generation & Uniqueness
+Ensuring every generated Sudoku puzzle is genuinely solvable and has only *one* valid solution was a major technical hurdle. I implemented a backtracking algorithm that first generates a completely full, valid 9x9 board. From there, it strategically removes numbers while using a standalone `Solver` class to continuously verify that the resulting board still has exactly one solution. If removing a number creates multiple possible solutions, the algorithm backtracks and tries another cell.
 
-Targets Android, iOS, Web, Linux, macOS, and Windows out of the box.
+### Offline-First Persistence with Hive
+For the save system, I needed a database that was incredibly fast and could handle synchronous operations, as the game saves its state every single second. I chose Hive because it's a lightweight NoSQL key-value store crafted purely in Dart. I wrote custom `TypeAdapter`s for my core classes (`GameState`, `MultiCell`, `Difficulty`) to serialize the complex nested lists of the game board directly into binary storage. This ensures that even if you close the app unexpectedly, you won't lose a single second of your progress.
 
----
+## Installation & Local Setup
 
-## Project Structure
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/itsLawrey/flutter-sudoku.git
+   ```
 
-```
-lib/
-├── main.dart               # App entry point, game loop & timer
-├── pages/
-│   └── landing_page.dart   # Home screen: highscores + game history
-├── widgets/
-│   ├── sudoku_grid.dart    # The 9×9 board
-│   ├── number_pad.dart     # Number selector with star/mark mode
-│   ├── game_history_card.dart  # Save slot cards with rename/delete
-│   └── dialogs/            # Victory, difficulty, delete dialogs
-└── utils/
-    └── model/
-        ├── game_state.dart  # Core game logic, error tracking, win detection
-        ├── multicell.dart   # Multi-number cell model
-        ├── meta_state.dart  # Save/load/highscore management
-        └── solver.dart      # Backtracking solver (uniqueness check)
-```
+2. Navigate into the project directory:
+   ```bash
+   cd flutter-sudoku
+   ```
 
----
+3. Fetch all required dependencies:
+   ```bash
+   flutter pub get
+   ```
 
-## Screenshots
-
-> *Coming soon*
-
+4. Run the application:
+   ```bash
+   flutter run
+   ```
